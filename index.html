@@ -3,200 +3,393 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finanças V1 - V3.0 OFICIAL</title>
+    <title>Finanças V1 - Controle melhor o seu Negócio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, deleteDoc, doc, updateDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyD-6Dnre57isMMhMVv7X7X1iT7-oy265UU",
-            authDomain: "financeirov1.firebaseapp.com",
-            projectId: "financeirov1",
-            storageBucket: "financeirov1.firebasestorage.app",
-            messagingSenderId: "316105672882",
-            appId: "1:316105672882:web:f2674aed7bf1e0976ba1ab"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        window.db = db;
-        window.firestore = { collection, addDoc, onSnapshot, query, deleteDoc, doc, updateDoc, orderBy };
-        
-        window.onload = () => inicializarApp();
-    </script>
-
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
-        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; margin: 0; }
-        .sidebar { width: 260px; background-color: #0f172a; color: white; height: 100vh; position: fixed; left: 0; top: 0; }
-        .main-content { margin-left: 260px; padding: 40px; width: calc(100% - 260px); min-height: 100vh; }
-        .card-financeiro { background: white; border-radius: 1.5rem; padding: 1.5rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .nav-item { display: flex; align-items: center; gap: 12px; padding: 16px 24px; color: #94a3b8; font-weight: 700; cursor: pointer; border-left: 4px solid transparent; transition: 0.3s; }
+        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 280px; background-color: #0f172a; color: white; display: flex; flex-direction: column; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 14px 24px; color: #94a3b8; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; border-left: 4px solid transparent; }
+        .nav-item:hover { background: #1e293b; color: white; }
         .nav-item.active { background: #1e293b; color: white; border-left-color: #3b82f6; }
-        .btn-canal { border: 2px solid; opacity: 0.4; font-weight: 900; transition: 0.3s; padding: 10px; border-radius: 12px; text-align: center; cursor: pointer; font-size: 10px; }
-        .btn-canal.active { opacity: 1; color: white !important; transform: translateY(-2px); }
-        .color-ifood { background-color: #ea1d2c; border-color: #ea1d2c; }
-        .color-keeta { background-color: #004d40; border-color: #004d40; }
-        .color-loja { background-color: #64748b; border-color: #64748b; }
-        .color-whatsapp { background-color: #25d366; border-color: #25d366; }
-        .page-content { display: none; }
-        .page-content.active { display: block; }
+        .main-content { flex: 1; overflow-y: auto; padding: 32px; }
+        .card-financeiro { background: white; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+        
+        .btn-canal { border: 2px solid; transition: 0.3s; background: transparent; opacity: 0.6; font-weight: 900; cursor: pointer; }
+        .btn-canal:hover { opacity: 1; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .btn-canal.active { opacity: 1; transform: scale(1.05); color: white !important; }
+        
+        .btn-loja { border-color: #64748b; color: #64748b; } .btn-loja.active { background-color: #64748b; }
+        .btn-ifood { border-color: #ea1d2c; color: #ea1d2c; } .btn-ifood.active { background-color: #ea1d2c; }
+        .btn-keeta { border-color: #004d40; color: #004d40; } .btn-keeta.active { background-color: #004d40; }
+        .btn-whatsapp { border-color: #25d366; color: #25d366; } .btn-whatsapp.active { background-color: #25d366; }
+
+        .color-ifood { background-color: #ea1d2c; } .color-keeta { background-color: #004d40; }
+        .color-loja { background-color: #64748b; } .color-whatsapp { background-color: #25d366; }
+        
+        .btn-acao { background-color: #10b981; color: white; font-weight: 900; text-transform: uppercase; border-radius: 0.75rem; transition: 0.3s; cursor: pointer; border: none; }
+        .btn-acao:hover { background-color: #059669; transform: translateY(-2px); }
+
+        .page-content { display: none; } .page-content.active { display: block; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
+        .modal.active { display: flex; }
     </style>
 </head>
 <body>
 
     <aside class="sidebar">
-        <div class="p-8"><h1 class="text-xl font-black italic uppercase">Finanças <span class="text-blue-500">V1</span></h1></div>
-        <nav>
-            <div class="nav-item active" onclick="showPage('vendas')"><i data-lucide="layout-dashboard"></i> Vendas</div>
-            <div class="nav-item" onclick="showPage('estoque')"><i data-lucide="package"></i> Estoque</div>
-            <div class="nav-item" onclick="showPage('fluxo')"><i data-lucide="bar-chart-3"></i> Fluxo de Caixa</div>
+        <div class="p-8">
+            <h1 class="text-sm font-black text-white uppercase tracking-tighter leading-tight">
+                Finanças <span class="text-blue-500">V1</span><br>
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Controle melhor o seu Negócio</span>
+            </h1>
+        </div>
+        <nav class="flex-1">
+            <div class="nav-item" onclick="showPage('dashboard')"><i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard</div>
+            <div class="nav-item" onclick="showPage('estoque')"><i data-lucide="package" class="w-5 h-5"></i> Controle de Estoque</div>
+            <div class="nav-item active" onclick="showPage('vendas')"><i data-lucide="shopping-cart" class="w-5 h-5"></i> Lançar Vendas</div>
+            <div class="nav-item" onclick="showPage('calculadora')"><i data-lucide="calculator" class="w-5 h-5"></i> Calculadora de Preços</div>
+            <div class="nav-item" onclick="showPage('boletos')"><i data-lucide="receipt" class="w-5 h-5"></i> Custos e Boletos</div>
+            <div class="nav-item" onclick="showPage('fluxo')"><i data-lucide="arrow-left-right" class="w-5 h-5"></i> Fluxo de Caixa</div>
         </nav>
     </aside>
 
     <main class="main-content">
+        
         <div id="page-vendas" class="page-content active">
-            <div class="flex justify-between items-end mb-8">
-                <h2 class="text-3xl font-black text-slate-800 uppercase italic">Dashboard de Vendas</h2>
-                <input type="date" id="data-filtro" onchange="atualizarInterfaceVendas()" class="p-2 border rounded-xl font-bold text-xs">
-            </div>
+            <header class="mb-8 flex flex-col lg:flex-row justify-between items-center gap-4">
+                <h2 class="text-2xl font-black text-slate-800 uppercase tracking-tighter">Lançar Vendas</h2>
+                <div class="flex items-center gap-2 bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
+                    <input type="date" id="data-inicio" onchange="atualizarVendas()" class="text-[10px] font-bold outline-none text-slate-600">
+                    <span class="text-[10px] font-black text-slate-300">ATÉ</span>
+                    <input type="date" id="data-fim" onchange="atualizarVendas()" class="text-[10px] font-bold outline-none text-slate-600">
+                </div>
+            </header>
 
-            <div class="grid grid-cols-3 gap-6 mb-10">
-                <div class="card-financeiro border-l-8 border-blue-500">
-                    <p class="text-[10px] font-black text-slate-400 uppercase">Faturamento</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <div class="card-financeiro border-t-4 border-blue-500">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Faturamento Bruto Total</p>
                     <h3 id="geral-bruto" class="text-2xl font-black text-slate-800">R$ 0,00</h3>
                 </div>
-                <div class="card-financeiro border-l-8 border-emerald-500">
-                    <p class="text-[10px] font-black text-slate-400 uppercase">Lucro Acumulado</p>
-                    <h3 id="lucro-acumulado" class="text-2xl font-black text-emerald-600">R$ 0,00</h3>
-                </div>
-                <div class="card-financeiro border-l-8 border-orange-500">
-                    <p class="text-[10px] font-black text-slate-400 uppercase">Margem</p>
-                    <h3 id="geral-margem" class="text-2xl font-black text-orange-600">0%</h3>
+                <div class="card-financeiro border-t-4 border-green-500">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Margem Média Geral</p>
+                    <h3 id="geral-margem" class="text-2xl font-black text-green-600">0%</h3>
                 </div>
             </div>
 
-            <div class="grid lg:grid-cols-3 gap-8">
-                <div class="card-financeiro">
-                    <div class="grid grid-cols-2 gap-2 mb-6">
-                        <div onclick="setCanal('loja')" id="btn-loja" class="btn-canal active color-loja">LOJA</div>
-                        <div onclick="setCanal('ifood')" id="btn-ifood" class="btn-canal color-ifood">IFOOD</div>
-                        <div onclick="setCanal('keeta')" id="btn-keeta" class="btn-canal color-keeta">KEETA</div>
-                        <div onclick="setCanal('whatsapp')" id="btn-whatsapp" class="btn-canal color-whatsapp">ZAP</div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-1">
+                    <div class="card-financeiro">
+                        <div class="grid grid-cols-4 gap-2 mb-6">
+                            <button onclick="setCanal('loja')" id="btn-loja" class="btn-canal btn-loja py-3 rounded-xl text-[9px]">LOJA</button>
+                            <button onclick="setCanal('ifood')" id="btn-ifood" class="btn-canal btn-ifood py-3 rounded-xl text-[9px]">IFOOD</button>
+                            <button onclick="setCanal('keeta')" id="btn-keeta" class="btn-canal btn-keeta py-3 rounded-xl text-[9px]">KEETA</button>
+                            <button onclick="setCanal('whatsapp')" id="btn-whatsapp" class="btn-canal btn-whatsapp py-3 rounded-xl text-[9px]">ZAP</button>
+                        </div>
+                        <div class="space-y-4">
+                            <input type="number" id="venda-bruta" placeholder="Bruto R$" class="w-full p-4 bg-slate-50 border rounded-xl font-black outline-none">
+                            <input type="number" id="venda-cmv" placeholder="CMV R$" class="w-full p-4 bg-slate-50 border rounded-xl font-black outline-none">
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="number" id="venda-embalagem" placeholder="Emb." class="p-4 bg-slate-50 border rounded-xl font-bold">
+                                <input type="number" id="venda-taxa-reais" placeholder="Taxa R$" class="p-4 bg-slate-50 border rounded-xl font-bold">
+                            </div>
+                            <button onclick="registrarVenda()" class="btn-acao w-full py-5 shadow-lg">Registrar Venda</button>
+                        </div>
                     </div>
-                    <input type="number" id="v-bruto" placeholder="Bruto R$" class="w-full p-4 mb-2 bg-slate-50 border rounded-xl font-black">
-                    <input type="number" id="v-cmv" placeholder="CMV R$" class="w-full p-4 mb-4 bg-slate-50 border rounded-xl font-black">
-                    <button onclick="registrarVenda()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase text-xs">Registrar</button>
                 </div>
-                <div id="grid-canais" class="lg:col-span-2 grid grid-cols-2 gap-4"></div>
+
+                <div class="lg:col-span-2 space-y-4">
+                    <div class="card-financeiro">
+                        <div class="flex justify-between items-end mb-4">
+                            <div><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Lucro Líquido Real (Período)</p><h2 id="lucro-acumulado" class="text-4xl font-black text-slate-800">R$ 0,00</h2></div>
+                            <div class="text-right"><p id="percentual-meta" class="text-2xl font-black text-blue-600">0%</p></div>
+                        </div>
+                        <div class="w-full bg-slate-100 h-4 rounded-full overflow-hidden"><div id="barra-progresso" class="bg-blue-600 h-full transition-all duration-700" style="width: 0%"></div></div>
+                        <p id="texto-status-meta" class="mt-4 text-[10px] font-bold text-center text-slate-500 uppercase tracking-widest italic"></p>
+                    </div>
+                    <div id="grid-canais" class="grid grid-cols-2 gap-4"></div>
+                </div>
             </div>
         </div>
 
         <div id="page-estoque" class="page-content">
-            <div class="flex justify-between items-center mb-8">
-                <h2 class="text-3xl font-black text-slate-800 uppercase italic">Estoque & Aging</h2>
-                <button class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-xs">View Items</button>
+            <header class="mb-8"><h2 class="text-2xl font-black text-slate-800 uppercase tracking-tighter">Controle de Estoque</h2></header>
+            <div class="grid lg:grid-cols-4 gap-6">
+                <div class="space-y-4">
+                    <div class="card-financeiro bg-slate-50 border-slate-200">
+                        <p class="text-[10px] font-black uppercase text-slate-400">Investimento Total</p>
+                        <h3 id="estoque-financeiro" class="text-2xl font-black text-slate-800">R$ 0,00</h3>
+                    </div>
+                    <div class="card-financeiro">
+                        <div class="space-y-3">
+                            <input type="text" id="est-nome" placeholder="Produto" class="w-full p-3 bg-slate-50 border rounded-xl font-bold text-sm outline-none">
+                            <input type="text" id="est-fornecedor" placeholder="Fornecedor" class="w-full p-3 bg-slate-50 border rounded-xl font-bold text-sm outline-none">
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="number" id="est-qtd" placeholder="Qtd" class="p-3 bg-slate-50 border rounded-xl font-bold text-sm">
+                                <input type="number" id="est-custo" placeholder="Custo Un." class="p-3 bg-slate-50 border rounded-xl font-bold text-sm">
+                            </div>
+                            <button onclick="registrarEstoque()" class="btn-acao w-full py-4 text-[10px]">Lançar no Estoque</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="lg:col-span-3 space-y-4" id="lista-estoque-agrupada"></div>
             </div>
-            <div class="grid grid-cols-4 gap-4 mb-8">
-                <input type="text" id="est-nome" placeholder="Item" class="p-4 border rounded-xl font-bold">
-                <input type="number" id="est-qtd" placeholder="Qtd" class="p-4 border rounded-xl font-bold">
-                <button onclick="addEstoque()" class="bg-slate-900 text-white rounded-xl font-black uppercase text-xs">Adicionar</button>
-            </div>
-            <div id="lista-estoque" class="grid grid-cols-3 gap-4"></div>
         </div>
+
+        <div id="page-calculadora" class="page-content">
+            <header class="mb-8"><h2 class="text-2xl font-black text-slate-800 uppercase tracking-tighter">Calculadora de Preços</h2></header>
+            <div class="card-financeiro max-w-2xl border-t-8 border-slate-900 shadow-xl">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div><label class="text-[10px] font-black text-slate-400 uppercase">Custo do Produto</label><input type="number" id="calc-custo" class="w-full p-4 bg-slate-50 border rounded-xl font-bold text-lg outline-none border-2 border-transparent focus:border-blue-500"></div>
+                    <div><label class="text-[10px] font-black text-slate-400 uppercase">Embalagem/Extras</label><input type="number" id="calc-emb" class="w-full p-4 bg-slate-50 border rounded-xl font-bold text-lg outline-none border-2 border-transparent focus:border-blue-500"></div>
+                    <div><label class="text-[10px] font-black text-slate-400 uppercase">Taxa do Canal (%)</label><input type="number" id="calc-taxa" class="w-full p-4 bg-slate-50 border rounded-xl font-bold text-lg outline-none border-2 border-transparent focus:border-blue-500"></div>
+                    <div><label class="text-[10px] font-black text-slate-400 uppercase">Margem Lucro (%)</label><input type="number" id="calc-margem" class="w-full p-4 bg-slate-50 border rounded-xl font-bold text-lg outline-none border-2 border-transparent focus:border-blue-500"></div>
+                </div>
+                <button onclick="calcularPrecoSimples()" class="btn-acao w-full py-6 text-xl shadow-xl">Calcular Agora</button>
+                <div id="resultado-calc" class="hidden mt-8 p-10 bg-slate-900 rounded-3xl text-center">
+                    <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2">Preço de Venda Sugerido</p>
+                    <h4 id="calc-preco-final" class="text-6xl font-black text-white">R$ 0,00</h4>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-boletos" class="page-content">
+             <header class="mb-8 flex justify-between items-center"><h2 class="text-2xl font-black text-slate-800 uppercase tracking-tighter">Custos e Boletos</h2><h3 id="total-custos-display" class="text-xl font-black text-red-500">R$ 0,00</h3></header>
+            <div class="card-financeiro">
+                <input type="hidden" id="edit-index" value="-1">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-8">
+                    <input type="text" id="boleto-nome" placeholder="Descrição" class="p-4 bg-slate-50 border rounded-xl font-bold text-sm outline-none">
+                    <input type="number" id="boleto-valor" placeholder="Valor R$" class="p-4 bg-slate-50 border rounded-xl font-bold text-sm outline-none">
+                    <input type="date" id="boleto-vencimento" class="p-4 bg-slate-50 border rounded-xl font-bold text-xs outline-none">
+                    <button onclick="registrarBoleto()" class="btn-acao text-xs">Salvar Boleto</button>
+                </div>
+                <table class="w-full text-left text-sm font-bold">
+                    <thead class="text-[9px] text-slate-400 uppercase border-b"><tr class=""><th class="py-3">Conta</th><th class="text-center">Vencimento</th><th class="text-center">Aging</th><th class="text-right">Valor</th><th class="text-right">Ação</th></tr></thead>
+                    <tbody id="lista-boletos"></tbody>
+                </table>
+            </div>
+        </div>
+        <div id="page-fluxo" class="page-content">
+            <header class="mb-8"><h2 class="text-2xl font-black text-slate-800 uppercase tracking-tighter">Fluxo de Caixa</h2></header>
+            <div class="grid lg:grid-cols-4 gap-6">
+                <div class="space-y-4">
+                    <div id="card-fluxo-saldo" class="card-financeiro text-white">
+                        <p class="text-[10px] font-bold opacity-70 uppercase tracking-widest">Saldo Acumulado</p>
+                        <h3 id="saldo-final-fluxo" class="text-3xl font-black">R$ 0,00</h3>
+                    </div>
+                    <div class="card-financeiro">
+                        <input type="text" id="fluxo-nome" placeholder="Descrição" class="w-full p-3 mb-3 bg-slate-50 border rounded-xl font-bold text-sm">
+                        <input type="number" id="fluxo-valor" placeholder="Valor R$" class="w-full p-3 mb-3 bg-slate-50 border rounded-xl font-bold text-sm">
+                        <input type="date" id="fluxo-data" class="w-full p-3 mb-3 bg-slate-50 border rounded-xl font-bold text-xs">
+                        <button onclick="registrarFluxoEntrada()" class="w-full btn-acao py-4 text-xs">Lançar Entrada</button>
+                    </div>
+                </div>
+                <div class="lg:col-span-3 space-y-4" id="lista-fluxo-dias"></div>
+            </div>
+        </div>
+
+        <div id="modal-vendas" class="modal" onclick="fecharModal()">
+            <div class="bg-white rounded-3xl p-8 w-full max-w-xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl" onclick="event.stopPropagation()">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 id="modal-titulo" class="text-xl font-black uppercase text-slate-800">Histórico</h3>
+                    <button onclick="fecharModal()"><i data-lucide="x" class="text-slate-400"></i></button>
+                </div>
+                <div id="modal-lista-vendas" class="flex-1 overflow-y-auto space-y-3"></div>
+            </div>
+        </div>
+
     </main>
 
     <script>
-        let vendas = [], estoque = [], canalAtivo = 'loja';
+        lucide.createIcons();
+        const hjStr = new Date().toISOString().split('T')[0];
+        document.getElementById('data-inicio').value = hjStr;
+        document.getElementById('data-fim').value = hjStr;
+
+        let vendas = [], boletos = [], estoque = [], fluxoEntradas = [];
+        let canalSelecionado = 'loja';
 
         function showPage(id) {
             document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             document.getElementById('page-'+id).classList.add('active');
             event.currentTarget.classList.add('active');
+            if(id === 'vendas') atualizarVendas();
+            if(id === 'estoque') atualizarEstoque();
+            if(id === 'boletos') atualizarBoletos();
+            if(id === 'fluxo') atualizarFluxo();
             lucide.createIcons();
         }
 
         function setCanal(c) {
-            canalAtivo = c;
+            canalSelecionado = c;
             document.querySelectorAll('.btn-canal').forEach(b => b.classList.remove('active'));
             document.getElementById('btn-'+c).classList.add('active');
         }
 
-        function inicializarApp() {
-            const hj = new Date().toISOString().split('T')[0];
-            document.getElementById('data-filtro').value = hj;
-
-            window.firestore.onSnapshot(window.firestore.collection(window.db, "vendas"), (snap) => {
-                vendas = snap.docs.map(d => d.data());
-                atualizarInterfaceVendas();
-            });
-
-            window.firestore.onSnapshot(window.firestore.collection(window.db, "estoque"), (snap) => {
-                estoque = snap.docs.map(d => d.data());
-                atualizarInterfaceEstoque();
-            });
-            lucide.createIcons();
-        }
-
-        async function registrarVenda() {
-            const b = parseFloat(document.getElementById('v-bruto').value) || 0;
-            const c = parseFloat(document.getElementById('v-cmv').value) || 0;
+        function registrarVenda() {
+            const b = parseFloat(document.getElementById('venda-bruta').value) || 0;
+            const c = parseFloat(document.getElementById('venda-cmv').value) || 0;
+            const e = parseFloat(document.getElementById('venda-embalagem').value) || 0;
+            const t = parseFloat(document.getElementById('venda-taxa-reais').value) || 0;
             if(b === 0) return;
-            await window.firestore.addDoc(window.firestore.collection(window.db, "vendas"), {
-                canal: canalAtivo, bruto: b, lucro: (b-c), data: document.getElementById('data-filtro').value
-            });
-            document.getElementById('v-bruto').value = ""; document.getElementById('v-cmv').value = "";
+            vendas.push({ id: Date.now(), canal: canalSelecionado, bruto: b, lucro: (b-c-e-t), data: document.getElementById('data-inicio').value });
+            ['venda-bruta','venda-cmv','venda-embalagem','venda-taxa-reais'].forEach(id => document.getElementById(id).value = "");
+            atualizarVendas();
         }
 
-        function atualizarInterfaceVendas() {
-            const filtro = document.getElementById('data-filtro').value;
-            let tb = 0, tl = 0; const canais = {loja:0, ifood:0, keeta:0, whatsapp:0};
+        function atualizarVendas() {
+            const dI = new Date(document.getElementById('data-inicio').value); dI.setHours(0,0,0,0);
+            const dF = new Date(document.getElementById('data-fim').value); dF.setHours(23,59,59,999);
+            let totalLucro = 0, totalBruto = 0, custoPeriodo = 0;
+            boletos.forEach(b => { const dv = new Date(b.venc); if(dv >= dI && dv <= dF) custoPeriodo += b.valor; });
+            const res = { loja: {l:0, b:0, n:'LOJA'}, ifood: {l:0, b:0, n:'IFOOD'}, keeta: {l:0, b:0, n:'KEETA'}, whatsapp: {l:0, b:0, n:'ZAP'} };
             
             vendas.forEach(v => {
-                if(v.data === filtro) {
-                    tb += v.bruto; tl += v.lucro; canais[v.canal] += v.lucro;
-                }
+                const dv = new Date(v.data);
+                if(dv >= dI && dv <= dF) { totalLucro += v.lucro; totalBruto += v.bruto; res[v.canal].l += v.lucro; res[v.canal].b += v.bruto; }
             });
 
-            document.getElementById('geral-bruto').innerText = `R$ ${tb.toFixed(2)}`;
-            document.getElementById('lucro-acumulado').innerText = `R$ ${tl.toFixed(2)}`;
-            document.getElementById('geral-margem').innerText = `${tb > 0 ? (tl/tb*100).toFixed(1) : 0}%`;
+            document.getElementById('geral-bruto').innerText = `R$ ${totalBruto.toFixed(2)}`;
+            document.getElementById('geral-margem').innerText = `${totalBruto > 0 ? (totalLucro/totalBruto*100).toFixed(1) : 0}%`;
+            document.getElementById('lucro-acumulado').innerText = `R$ ${totalLucro.toFixed(2)}`;
+            
+            const perc = custoPeriodo > 0 ? (totalLucro / custoPeriodo) * 100 : 0;
+            document.getElementById('barra-progresso').style.width = Math.min(perc, 100) + "%";
+            document.getElementById('percentual-meta').innerText = Math.round(perc) + "%";
+            const falta = custoPeriodo - totalLucro;
+            document.getElementById('texto-status-meta').innerText = falta > 0 ? `Faltam R$ ${falta.toFixed(2)} para pagar os Custos` : `Custo Pago! Sobra: R$ ${Math.abs(falta).toFixed(2)}`;
 
-            const grid = document.getElementById('grid-canais');
-            grid.innerHTML = "";
-            for(let k in canais) {
-                grid.innerHTML += `<div class="card-financeiro text-white color-${k} border-none">
-                    <p class="text-[9px] font-black uppercase opacity-70">${k}</p>
-                    <h3 class="text-xl font-black">R$ ${canais[k].toFixed(2)}</h3>
-                </div>`;
+            const grid = document.getElementById('grid-canais'); grid.innerHTML = "";
+            for(let k in res) {
+                const c = res[k]; const margem = c.b > 0 ? (c.l / c.b * 100).toFixed(1) : 0;
+                grid.innerHTML += `
+                    <div onclick="abrirModalVendas('${k}')" class="card-financeiro border-none text-white color-${k} cursor-pointer hover:scale-[1.02] transition shadow-lg">
+                        <div class="flex justify-between items-start">
+                            <span class="text-[10px] font-black uppercase opacity-80">${c.n}</span>
+                            <span class="text-[9px] font-black bg-white/20 px-2 py-0.5 rounded-full">${margem}%</span>
+                        </div>
+                        <p class="text-2xl font-black mt-2">R$ ${c.l.toFixed(2)}</p>
+                        <p class="text-[9px] font-bold opacity-70 uppercase tracking-tighter">Lucro Período</p>
+                    </div>`;
             }
         }
 
-        function atualizarInterfaceEstoque() {
-            const lista = document.getElementById('lista-estoque');
-            lista.innerHTML = "";
-            estoque.forEach(i => {
-                lista.innerHTML += `<div class="card-financeiro">
-                    <div class="flex justify-between items-start mb-2">
-                        <h4 class="font-black uppercase text-xs">${i.nome}</h4>
-                        <span class="bg-orange-100 text-orange-600 text-[9px] px-2 py-1 rounded font-bold">AGING: 1 DAY</span>
-                    </div>
-                    <h3 class="text-2xl font-black">${i.qtd} un</h3>
-                </div>`;
+        function abrirModalVendas(canal) {
+            const list = document.getElementById('modal-lista-vendas'); list.innerHTML = "";
+            document.getElementById('modal-titulo').innerText = "Vendas: " + canal.toUpperCase();
+            vendas.filter(v => v.canal === canal).forEach(v => {
+                list.innerHTML += `<div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border"><div><p class="text-xs font-black">R$ ${v.bruto.toFixed(2)}</p><p class="text-green-600 text-[10px] font-bold">LÍQUIDO: R$ ${v.lucro.toFixed(2)}</p></div><button onclick="excluirVenda(${v.id})" class="text-red-400 p-2"><i data-lucide="trash-2" class="w-5 h-5"></i></button></div>`;
             });
+            document.getElementById('modal-vendas').classList.add('active'); lucide.createIcons();
+        }
+        function fecharModal() { document.getElementById('modal-vendas').classList.remove('active'); }
+        function excluirVenda(id) { vendas = vendas.filter(v => v.id !== id); atualizarVendas(); fecharModal(); }
+
+        // --- ESTOQUE (CORREÇÃO DE TERMOS) ---
+        function registrarEstoque() {
+            const n = document.getElementById('est-nome').value, f = document.getElementById('est-fornecedor').value.trim() || "Diverso";
+            const q = parseFloat(document.getElementById('est-qtd').value) || 0, c = parseFloat(document.getElementById('est-custo').value) || 0;
+            if(!n || q === 0) return;
+            estoque.push({ id: Date.now(), nome: n, fornecedor: f, qtd: q, custo: c, dataEntrada: new Date() });
+            ['est-nome','est-fornecedor','est-qtd','est-custo'].forEach(id => document.getElementById(id).value = "");
+            atualizarEstoque();
         }
 
-        async function addEstoque() {
-            const n = document.getElementById('est-nome').value, q = document.getElementById('est-qtd').value;
-            if(!n) return;
-            await window.firestore.addDoc(window.firestore.collection(window.db, "estoque"), { nome: n, qtd: q, data: new Date().toISOString() });
-            document.getElementById('est-nome').value = ""; document.getElementById('est-qtd').value = "";
+        function atualizarEstoque() {
+            const container = document.getElementById('lista-estoque-agrupada'); container.innerHTML = "";
+            let totalG = 0; const grupos = {};
+            estoque.forEach(item => { 
+                if(!grupos[item.fornecedor]) grupos[item.fornecedor] = { itens: [], total: 0 }; 
+                grupos[item.fornecedor].itens.push(item); 
+                grupos[item.fornecedor].total += (item.qtd * item.custo);
+                totalG += (item.qtd * item.custo);
+            });
+            for(let f in grupos) {
+                const idF = 'f-' + f.replace(/\s+/g, '-');
+                container.innerHTML += `
+                <div class="card-financeiro p-0 overflow-hidden mb-4 border-l-4 border-slate-800 shadow-sm">
+                    <div class="p-4 flex justify-between items-center bg-white">
+                        <div><span class="font-black text-xs uppercase text-slate-700">${f}</span><p class="text-[11px] text-black font-black uppercase">Estoque: R$ ${grupos[f].total.toFixed(2)}</p></div>
+                        <button onclick="document.getElementById('${idF}').classList.toggle('hidden')" class="bg-slate-100 text-slate-800 px-4 py-2 rounded-lg font-black text-[10px] hover:bg-slate-200 transition">VER ITENS</button>
+                    </div>
+                    <div id="${idF}" class="hidden bg-slate-50 border-t"><table class="w-full text-[11px] font-bold"><tbody>` +
+                    grupos[f].itens.map(item => {
+                        const diffDias = Math.floor((new Date() - new Date(item.dataEntrada)) / 86400000);
+                        const agingTxt = diffDias === 0 ? "Hoje" : diffDias + "d";
+                        return `
+                        <tr class="border-b">
+                            <td class="p-3 uppercase">${item.nome}</td>
+                            <td class="p-3 text-center text-orange-600 font-bold">Dias de Estoque: ${agingTxt}</td>
+                            <td class="p-3 text-center">Quantidade: ${item.qtd} un</td>
+                            <td class="p-3 text-right"><button onclick="darBaixa(${item.id})" class="text-green-600 font-black underline uppercase">Nova Venda</button></td>
+                        </tr>`;
+                    }).join('') + `</tbody></table></div></div>`;
+            }
+            document.getElementById('estoque-financeiro').innerText = `R$ ${totalG.toFixed(2)}`;
         }
+        function darBaixa(id) { const q = prompt("Quantidade Vendida?"); if(q) { estoque = estoque.map(i => i.id === id ? {...i, qtd: Math.max(0, i.qtd - parseFloat(q))} : i); atualizarEstoque(); } }
+
+        function calcularPrecoSimples() {
+            const c = parseFloat(document.getElementById('calc-custo').value) || 0;
+            const e = parseFloat(document.getElementById('calc-emb').value) || 0;
+            const t = parseFloat(document.getElementById('calc-taxa').value) || 0;
+            const m = parseFloat(document.getElementById('calc-margem').value) || 0;
+            const res = (c + e) / (1 - ((t + m) / 100));
+            document.getElementById('resultado-calc').classList.remove('hidden');
+            document.getElementById('calc-preco-final').innerText = isFinite(res) ? `R$ ${res.toFixed(2)}` : "Erro %";
+        }
+
+        function registrarBoleto() {
+            const n = document.getElementById('boleto-nome').value, v = parseFloat(document.getElementById('boleto-valor').value) || 0, d = document.getElementById('boleto-vencimento').value;
+            const idx = parseInt(document.getElementById('edit-index').value);
+            if(!n || v === 0 || !d) return;
+            if(idx === -1) boletos.push({ id: Date.now(), nome: n, valor: v, venc: d });
+            else { boletos = boletos.map((b, i) => i === idx ? {...b, nome: n, valor: v, venc: d} : b); document.getElementById('edit-index').value = "-1"; }
+            ['boleto-nome','boleto-valor','boleto-vencimento'].forEach(id => document.getElementById(id).value = "");
+            atualizarBoletos();
+        }
+        function atualizarBoletos() {
+            const list = document.getElementById('lista-boletos'); list.innerHTML = "";
+            let t = 0; const hj = new Date(); hj.setHours(0,0,0,0);
+            boletos.forEach((b, i) => {
+                t += b.valor; const dv = new Date(b.venc); dv.setHours(0,0,0,0);
+                const diff = Math.ceil((dv - hj) / 86400000);
+                const agingTxt = diff === 0 ? "Hoje" : diff > 0 ? `${diff} dias` : "Vencido";
+                list.innerHTML += `<tr class="border-b"><td class="py-4 uppercase text-[10px] font-black">${b.nome}</td><td class="text-center text-[10px] text-slate-400">${b.venc.split('-').reverse().join('/')}</td><td class="text-center text-[10px] font-black uppercase text-blue-500">${agingTxt}</td><td class="text-right text-red-500 font-black">R$ ${b.valor.toFixed(2)}</td><td class="text-right"><button onclick="editarBoleto(${i})" class="text-slate-300 mr-2"><i data-lucide="edit" class="w-4 h-4"></i></button><button onclick="excluirBoleto(${i})" class="text-slate-200"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`;
+            });
+            document.getElementById('total-custos-display').innerText = `R$ ${t.toFixed(2)}`;
+            lucide.createIcons(); atualizarVendas(); atualizarFluxo();
+        }
+        function editarBoleto(i) {
+            const b = boletos[i]; document.getElementById('boleto-nome').value = b.nome; document.getElementById('boleto-valor').value = b.valor; document.getElementById('boleto-vencimento').value = b.venc; document.getElementById('edit-index').value = i;
+        }
+        function excluirBoleto(i) { boletos.splice(i,1); atualizarBoletos(); }
+
+        function registrarFluxoEntrada() {
+            const n = document.getElementById('fluxo-nome').value, v = parseFloat(document.getElementById('fluxo-valor').value) || 0, d = document.getElementById('fluxo-data').value;
+            if(!n || v === 0 || !d) return;
+            fluxoEntradas.push({ nome: n, valor: v, data: d });
+            atualizarFluxo();
+        }
+        function atualizarFluxo() {
+            const cont = document.getElementById('lista-fluxo-dias'); cont.innerHTML = "";
+            const ag = {}; let ac = 0;
+            boletos.forEach(b => { if(!ag[b.venc]) ag[b.venc] = {s:[],e:[]}; ag[b.venc].s.push(b); });
+            vendas.forEach(v => { if(!ag[v.data]) ag[v.data] = {s:[],e:[]}; ag[v.data].e.push({nome: `VENDA ${v.canal.toUpperCase()}`, valor: v.lucro}); });
+            fluxoEntradas.forEach(e => { if(!ag[e.data]) ag[e.data] = {s:[],e:[]}; ag[e.data].e.push(e); });
+            Object.keys(ag).sort().forEach(d => {
+                const dia = ag[d], te = dia.e.reduce((s,x)=>s+x.valor,0), ts = dia.s.reduce((s,x)=>s+x.valor,0), sd = te-ts; ac += sd;
+                let h = `<div class="card-financeiro p-4 mb-3 bg-slate-50"><div class="flex justify-between border-b pb-2 mb-2 font-black text-[10px]"><span>${d.split('-').reverse().join('/')}</span><span class="${sd>=0?'text-green-600':'text-red-600'}">DIA: R$ ${sd.toFixed(2)}</span></div>`;
+                dia.e.forEach(e => h += `<div class="flex justify-between text-[10px] font-bold text-green-700"><span>(+) ${e.nome}</span><span>R$ ${e.valor.toFixed(2)}</span></div>`);
+                dia.s.forEach(s => h += `<div class="flex justify-between text-[10px] font-bold text-red-500"><span>(-) ${s.nome}</span><span>R$ ${s.valor.toFixed(2)}</span></div>`);
+                cont.innerHTML += h + `</div>`;
+            });
+            document.getElementById('saldo-final-fluxo').innerText = `R$ ${ac.toFixed(2)}`;
+            document.getElementById('card-fluxo-saldo').className = `card-financeiro ${ac >= 0 ? 'bg-green-600' : 'bg-red-600'}`;
+        }
+        atualizarBoletos();
     </script>
 </body>
 </html>
