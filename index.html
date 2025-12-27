@@ -1,8 +1,95 @@
-<script type="module">
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finanças V1 - V3.0 Conectada</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 280px; background-color: #0f172a; color: white; display: flex; flex-direction: column; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 14px 24px; color: #94a3b8; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; border-left: 4px solid transparent; }
+        .nav-item.active { background: #1e293b; color: white; border-left-color: #3b82f6; }
+        .main-content { flex: 1; overflow-y: auto; padding: 32px; }
+        .card-financeiro { background: white; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+        .btn-canal { border: 2px solid; transition: 0.3s; background: transparent; opacity: 0.6; font-weight: 900; cursor: pointer; }
+        .btn-canal.active { opacity: 1; transform: scale(1.05); color: white !important; }
+        .btn-loja { border-color: #64748b; color: #64748b; } .btn-loja.active { background-color: #64748b; }
+        .btn-ifood { border-color: #ea1d2c; color: #ea1d2c; } .btn-ifood.active { background-color: #ea1d2c; }
+        .btn-keeta { border-color: #004d40; color: #004d40; } .btn-keeta.active { background-color: #004d40; }
+        .btn-whatsapp { border-color: #25d366; color: #25d366; } .btn-whatsapp.active { background-color: #25d366; }
+        .color-ifood { background-color: #ea1d2c; } .color-keeta { background-color: #004d40; }
+        .color-loja { background-color: #64748b; } .color-whatsapp { background-color: #25d366; }
+        .btn-acao { background-color: #10b981; color: white; font-weight: 900; text-transform: uppercase; border-radius: 0.75rem; transition: 0.3s; cursor: pointer; border: none; }
+        .page-content { display: none; } .page-content.active { display: block; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="p-8">
+            <h1 class="text-sm font-black text-white uppercase tracking-tighter leading-tight">
+                Finanças <span class="text-blue-500">V1</span><br>
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Controle Profissional</span>
+            </h1>
+        </div>
+        <nav class="flex-1">
+            <div class="nav-item active" onclick="showPage('vendas')"><i data-lucide="shopping-cart"></i> Lançar Vendas</div>
+            <div class="nav-item" onclick="showPage('estoque')"><i data-lucide="package"></i> Estoque</div>
+            <div class="nav-item" onclick="showPage('boletos')"><i data-lucide="receipt"></i> Boletos</div>
+            <div class="nav-item" onclick="showPage('fluxo')"><i data-lucide="arrow-left-right"></i> Fluxo de Caixa</div>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <div id="page-vendas" class="page-content active">
+            <header class="mb-8 flex justify-between items-center">
+                <h2 class="text-2xl font-black text-slate-800 uppercase tracking-tighter">Lançar Vendas</h2>
+                <div class="flex gap-2 bg-white p-2 rounded-2xl border shadow-sm">
+                    <input type="date" id="data-inicio" onchange="atualizarVendas()" class="text-[10px] font-bold outline-none">
+                    <input type="date" id="data-fim" onchange="atualizarVendas()" class="text-[10px] font-bold outline-none">
+                </div>
+            </header>
+
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <div class="card-financeiro border-t-4 border-blue-500">
+                    <p class="text-[10px] font-black text-slate-400 uppercase">Faturamento Bruto</p>
+                    <h3 id="geral-bruto" class="text-2xl font-black text-slate-800">R$ 0,00</h3>
+                </div>
+                <div class="card-financeiro border-t-4 border-green-500">
+                    <p class="text-[10px] font-black text-slate-400 uppercase">Lucro Líquido</p>
+                    <h3 id="lucro-acumulado" class="text-2xl font-black text-green-600">R$ 0,00</h3>
+                </div>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-8">
+                <div class="card-financeiro h-fit">
+                    <div class="grid grid-cols-4 gap-2 mb-6">
+                        <button onclick="setCanal('loja')" id="btn-loja" class="btn-canal btn-loja py-3 rounded-xl text-[9px] active">LOJA</button>
+                        <button onclick="setCanal('ifood')" id="btn-ifood" class="btn-canal btn-ifood py-3 rounded-xl text-[9px]">IFOOD</button>
+                        <button onclick="setCanal('keeta')" id="btn-keeta" class="btn-canal btn-keeta py-3 rounded-xl text-[9px]">KEETA</button>
+                        <button onclick="setCanal('whatsapp')" id="btn-whatsapp" class="btn-canal btn-whatsapp py-3 rounded-xl text-[9px]">ZAP</button>
+                    </div>
+                    <input type="number" id="venda-bruta" placeholder="Bruto R$" class="w-full p-4 bg-slate-50 border rounded-xl font-black mb-3 outline-none">
+                    <input type="number" id="venda-cmv" placeholder="Custo (CMV) R$" class="w-full p-4 bg-slate-50 border rounded-xl font-black mb-6 outline-none">
+                    <button onclick="registrarVenda()" class="btn-acao w-full py-5 shadow-lg">Registrar Venda</button>
+                </div>
+                <div id="grid-canais" class="lg:col-span-2 grid grid-cols-2 gap-4"></div>
+            </div>
+        </div>
+
+        <div id="page-estoque" class="page-content">
+            <h2 class="text-2xl font-black mb-8 uppercase">Controle de Estoque</h2>
+            <div id="lista-estoque" class="grid grid-cols-3 gap-4"></div>
+        </div>
+    </main>
+
+    <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, deleteDoc, doc, updateDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // CONFIGURAÇÃO DO SEU FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyD-6Dnre57isMMhMVv7X7X1iT7-oy265UU",
             authDomain: "financeirov1.firebaseapp.com",
@@ -15,79 +102,73 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // VARIÁVEIS GLOBAIS
-        let vendas = [], boletos = [], estoque = [], fluxoEntradas = [];
-        let canalSelecionado = 'loja';
+        // VARIÁVEIS DE ESTADO
+        let vendas = [], canalAtivo = 'loja';
 
-        // SINCRONIZAÇÃO EM TEMPO REAL COM O FIREBASE
-        window.onload = () => {
+        // FUNÇÕES GLOBAIS (Expostas para os botões)
+        window.showPage = (id) => {
+            document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById('page-'+id).classList.add('active');
+            event.currentTarget.classList.add('active');
             lucide.createIcons();
-            const hjStr = new Date().toISOString().split('T')[0];
-            document.getElementById('data-inicio').value = hjStr;
-            document.getElementById('data-fim').value = hjStr;
-
-            // Escutar Vendas
-            onSnapshot(collection(db, "vendas"), (snap) => {
-                vendas = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                atualizarVendas();
-            });
-
-            // Escutar Estoque
-            onSnapshot(collection(db, "estoque"), (snap) => {
-                estoque = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                atualizarEstoque();
-            });
-
-            // Escutar Boletos
-            onSnapshot(collection(db, "boletos"), (snap) => {
-                boletos = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                atualizarBoletos();
-            });
         };
 
-        // FUNÇÕES DE REGISTRO NO FIREBASE
+        window.setCanal = (c) => {
+            canalAtivo = c;
+            document.querySelectorAll('.btn-canal').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-'+c).classList.add('active');
+        };
+
         window.registrarVenda = async () => {
             const b = parseFloat(document.getElementById('venda-bruta').value) || 0;
             const c = parseFloat(document.getElementById('venda-cmv').value) || 0;
-            const e = parseFloat(document.getElementById('venda-embalagem').value) || 0;
-            const t = parseFloat(document.getElementById('venda-taxa-reais').value) || 0;
             if(b === 0) return;
             
             await addDoc(collection(db, "vendas"), {
-                canal: canalSelecionado,
-                bruto: b,
-                lucro: (b - c - e - t),
-                data: document.getElementById('data-inicio').value,
-                timestamp: Date.now()
+                canal: canalAtivo, bruto: b, lucro: (b-c), data: document.getElementById('data-inicio').value, timestamp: Date.now()
+            });
+            document.getElementById('venda-bruta').value = ""; document.getElementById('venda-cmv').value = "";
+        };
+
+        // SINCRONIZAÇÃO
+        onSnapshot(collection(db, "vendas"), (snap) => {
+            vendas = snap.docs.map(d => d.data());
+            window.atualizarVendas();
+        });
+
+        window.atualizarVendas = () => {
+            const dI = document.getElementById('data-inicio').value;
+            const dF = document.getElementById('data-fim').value;
+            let tb = 0, tl = 0;
+            const canais = { loja: 0, ifood: 0, keeta: 0, whatsapp: 0 };
+
+            vendas.forEach(v => {
+                if(v.data >= dI && v.data <= dF) {
+                    tb += v.bruto; tl += v.lucro; canais[v.canal] += v.lucro;
+                }
             });
 
-            ['venda-bruta','venda-cmv','venda-embalagem','venda-taxa-reais'].forEach(id => document.getElementById(id).value = "");
+            document.getElementById('geral-bruto').innerText = `R$ ${tb.toLocaleString('pt-br', {minimumFractionDigits:2})}`;
+            document.getElementById('lucro-acumulado').innerText = `R$ ${tl.toLocaleString('pt-br', {minimumFractionDigits:2})}`;
+
+            const grid = document.getElementById('grid-canais');
+            grid.innerHTML = "";
+            for(let k in canais) {
+                grid.innerHTML += `<div class="card-financeiro text-white color-${k} border-none">
+                    <p class="text-[10px] font-black uppercase opacity-70">${k}</p>
+                    <h3 class="text-2xl font-black">R$ ${canais[k].toLocaleString('pt-br', {minimumFractionDigits:2})}</h3>
+                </div>`;
+            }
         };
 
-        window.registrarEstoque = async () => {
-            const n = document.getElementById('est-nome').value;
-            const f = document.getElementById('est-fornecedor').value.trim() || "Diverso";
-            const q = parseFloat(document.getElementById('est-qtd').value) || 0;
-            const c = parseFloat(document.getElementById('est-custo').value) || 0;
-            if(!n || q === 0) return;
-
-            await addDoc(collection(db, "estoque"), {
-                nome: n, fornecedor: f, qtd: q, custo: c, dataEntrada: new Date().toISOString()
-            });
-
-            ['est-nome','est-fornecedor','est-qtd','est-custo'].forEach(id => document.getElementById(id).value = "");
+        // INICIALIZAÇÃO
+        window.onload = () => {
+            const hj = new Date().toISOString().split('T')[0];
+            document.getElementById('data-inicio').value = hj;
+            document.getElementById('data-fim').value = hj;
+            lucide.createIcons();
         };
-
-        window.registrarBoleto = async () => {
-            const n = document.getElementById('boleto-nome').value;
-            const v = parseFloat(document.getElementById('boleto-valor').value) || 0;
-            const d = document.getElementById('boleto-vencimento').value;
-            if(!n || v === 0 || !d) return;
-
-            await addDoc(collection(db, "boletos"), { nome: n, valor: v, venc: d });
-            ['boleto-nome','boleto-valor','boleto-vencimento'].forEach(id => document.getElementById(id).value = "");
-        };
-
-        // ... Mantenha as funções de interface (showPage, atualizarVendas, atualizarEstoque, etc.) abaixo desta linha ...
-        // Elas já estão no seu código e funcionam bem para exibir os dados que virão do Firebase.
     </script>
+</body>
+</html>
